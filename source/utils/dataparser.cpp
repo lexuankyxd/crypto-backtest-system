@@ -1,18 +1,22 @@
-#include "../../include/dataparser.hpp"
-#include "../../include/datatypes.hpp"
+#include "dataparser.hpp"
+#include "datatypes.hpp"
 #include <atomic>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <iostream>
 #include <mutex>
 #include <optional>
+#include <queue>
 #include <thread>
 #include <vector>
 
 FILE *k, *tr, *at;
-std::vector<KLine> data_frames;
+std::queue<KLine> data_frames;
 std::mutex mtx;
 std::atomic<bool> done = false;
+std::atomic<bool> stop_reading = false;
 // super slow, will optimize later
 std::vector<Trade> readTradesBetweenTime(int64_t first_id, int64_t last_id) {
   static std::vector<Trade> trade_buffer;
@@ -62,7 +66,8 @@ std::vector<AggTrade> readAggTradesBetweenTime(int64_t open_time,
 
 void readKLine() {
   int cnt = 0;
-  while (!feof(k)) {
+  auto start = clock();
+  while (!feof(k) && !stop_reading) {
     KLine kl = KLine();
     int tmp;
     fscanf(k, "%ld,%lf,%lf,%lf,%lf,%lf,%ld,%lf,%hd,%lf,%lf,%d", &kl.open_time,
@@ -71,11 +76,17 @@ void readKLine() {
            &kl.taker_quote_vol, &tmp);
     kl.agg_trades = readAggTradesBetweenTime(kl.open_time, kl.close_time);
     std::lock_guard<std::mutex> lock(mtx);
-    data_frames.push_back(kl);
-    // if (data_frames.size() == 1)
+    data_frames.push(kl);
+    cnt++;
+    // std::cout << cnt << '\n';
+    // if (cnt == 100 * 60)
     //   break;
   }
   done = true;
+  std::cout << stop_reading << '\n';
+  printf("Reading thread stopped\n");
+  printf("Data frames per sec: %lf\n",
+         (double)cnt / ((double)(clock() - start) / CLOCKS_PER_SEC));
 }
 
 void initParser(FILE *kl, FILE *t, FILE *a) {
@@ -87,9 +98,11 @@ void initParser(FILE *kl, FILE *t, FILE *a) {
 std::optional<KLine> getNextKLine() {
   static int index = 0;
   std::lock_guard<std::mutex> lock(mtx);
-  if (index < data_frames.size())
-    return data_frames[index++];
-  return std::optional<KLine>();
+  if (data_frames.empty() || stop_reading)
+    return std::optional<KLine>();
+  auto tmp = data_frames.front();
+  data_frames.pop();
+  return tmp;
 }
 
 std::optional<std::vector<KLine>> getKLineInRange(int64_t open_time,
@@ -109,3 +122,7 @@ std::optional<std::vector<KLine>> getKLineInRange(int64_t open_time,
 }
 
 bool isDone() { return done; }
+void stop_force() {
+  stop_reading = true;
+  printf("stop called\n");
+}

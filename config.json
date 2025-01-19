@@ -3,15 +3,15 @@
     [
       {
         "type": "kline",
-        "dir": "../formalized-data/BTCUSDT-1s-2024-12-03.csv"
+        "dir": "formalized-data/BTCUSDT-1s-2024-12-03.csv"
       },
       {
         "type": "aggTrade",
-        "dir": "../formalized-data/BTCUSDT-aggTrades-2024-12-03.csv"
+        "dir": "formalized-data/BTCUSDT-aggTrades-2024-12-03.csv"
       },
       {
         "type": "trade",
-        "dir": "../formalized-data/BTCUSDT-trades-2024-12-03.csv"
+        "dir": "formalized-data/BTCUSDT-trades-2024-12-03.csv"
       }
     ]
   ],

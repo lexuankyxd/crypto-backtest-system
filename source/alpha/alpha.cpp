@@ -1,5 +1,5 @@
-#include "../../include/alpha.hpp"
-#include "../../include/ta-function.hpp"
+#include "alpha.hpp"
+#include "ta-function.hpp"
 #include <bits/stdc++.h>
 #include <cstdio>
 using namespace std;
@@ -21,5 +21,8 @@ Signal Alpha::getSignal(const KLine kl) {
   s.low_out = kl.close * 0.95;
   s.high_out = sma50.getVal() / sma200.getVal() * kl.close;
   s.amt = 1 / kl.close * 100;
+  s.created_at = kl.close_time;
+  s.in_price = kl.close;
+  s.latest_exit_time = kl.close_time + 1000 * 60 * 5;
   return s;
 }

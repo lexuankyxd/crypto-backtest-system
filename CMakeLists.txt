@@ -18,6 +18,9 @@ file(GLOB S1 source/utils/*.cpp)
 
 list(APPEND SOURCES ${S1})
 
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+endif()
 # Define the executable target
 add_executable(main source/main.cpp ${SOURCES})
 

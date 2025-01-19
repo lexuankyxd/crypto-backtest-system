@@ -1,4 +1,4 @@
-#include "../../include/configparser.hpp"
+#include "configparser.hpp"
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -6,7 +6,8 @@
 // always search for config.json file at project root.
 using json = nlohmann::json;
 BacktestDataConfiguration parseConfig() {
-  std::ifstream f("../config.json");
+  std::ifstream f("config.json");
+
   BacktestDataConfiguration config;
   json data = json::parse(f);
   config.print_dist = data["print_dist"];

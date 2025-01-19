@@ -64,14 +64,17 @@ typedef struct KLine {
 } KLine;
 
 typedef struct Signal {
-  int64_t latest_exit_time;
-  double high_out, low_out, amt; // high and low will be in base -> quote ratio,
-                                 // amt is the amount of base asset bought
+  int64_t latest_exit_time, created_at;
+  double high_out, low_out, amt,
+      in_price; // high and low will be in base -> quote ratio,
+                // amt is the amount of base asset bought
 
   std::string to_string() const {
     std::ostringstream oss;
     oss << "{ latest_exit_time: " << latest_exit_time
-        << ", high_out: " << high_out << ", low_out: " << low_out << "}";
+        << ", created_at: " << created_at << ", high_out: " << high_out
+        << ", low_out: " << low_out << ", in_price: " << in_price
+        << ", amt: " << amt << "}";
     return oss.str();
   }
 } Signal;
