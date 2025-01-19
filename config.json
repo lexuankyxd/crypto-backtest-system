@@ -1,0 +1,22 @@
+{
+  "data": [
+    [
+      {
+        "type": "kline",
+        "dir": "../formalized-data/BTCUSDT-1s-2024-12-03.csv"
+      },
+      {
+        "type": "aggTrade",
+        "dir": "../formalized-data/BTCUSDT-aggTrades-2024-12-03.csv"
+      },
+      {
+        "type": "trade",
+        "dir": "../formalized-data/BTCUSDT-trades-2024-12-03.csv"
+      }
+    ]
+  ],
+  "gen_report": true,
+  "live_print": true,
+  "print_dist": 60,
+  "strat_name": "demo_algo"
+}
