@@ -16,7 +16,7 @@
     ]
   ],
   "gen_report": true,
-  "live_print": true,
+  "live_print": false,
   "print_dist": 60,
   "strat_name": "demo_algo"
 }

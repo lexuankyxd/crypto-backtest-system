@@ -17,9 +17,9 @@ file(GLOB SOURCES source/alpha/*.cpp)
 file(GLOB S1 source/utils/*.cpp)
 
 list(APPEND SOURCES ${S1})
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg -fprofile-arcs -ftest-coverage")
 endif()
 # Define the executable target
 add_executable(main source/main.cpp ${SOURCES})

@@ -1,5 +1,5 @@
-#include "dataparser.hpp"
-#include "datatypes.hpp"
+#include "../../include/dataparser.hpp"
+#include "../../include/datatypes.hpp"
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
@@ -17,6 +17,7 @@ std::queue<KLine> data_frames;
 std::mutex mtx;
 std::atomic<bool> done = false;
 std::atomic<bool> stop_reading = false;
+int trade_cnt = 0, agg_trade_cnt = 0, kl_cnt = 0;
 // super slow, will optimize later
 std::vector<Trade> readTradesBetweenTime(int64_t first_id, int64_t last_id) {
   static std::vector<Trade> trade_buffer;
@@ -24,12 +25,16 @@ std::vector<Trade> readTradesBetweenTime(int64_t first_id, int64_t last_id) {
   for (Trade t : trade_buffer)
     if (t.id >= first_id && t.id <= last_id)
       ts.push_back(t);
-  while (!feof(tr)) {
+  while (true) {
     Trade t = Trade();
     char maker[10], best_match[10];
-    fscanf(tr, "%ld,%lf,%lf,%lf,%ld,%s,%s", &t.id, &t.price, &t.quantity,
-           &t.quote_quantity, &t.time, maker, best_match);
+    int res =
+        fscanf(tr, "%ld,%lf,%lf,%lf,%ld,%s,%s", &t.id, &t.price, &t.quantity,
+               &t.quote_quantity, &t.time, maker, best_match);
+    if (res == EOF)
+      break;
     t.maker = maker[0] == 'T', t.best_match = best_match[0] == 'T';
+    trade_cnt++;
     if (t.id >= first_id && t.id <= last_id)
       ts.push_back(t);
     else {
@@ -47,11 +52,15 @@ std::vector<AggTrade> readAggTradesBetweenTime(int64_t open_time,
   for (AggTrade a : agg_trades_buffer)
     if (a.timestamp >= open_time && a.timestamp <= close_time)
       agg_trades.push_back(a);
-  while (!feof(at)) {
+  while (true) {
     AggTrade a = AggTrade();
     char maker[10], best_match[10];
-    fscanf(at, "%ld,%lf,%lf,%ld,%ld,%ld,%s,%s", &a.id, &a.price, &a.quantity,
-           &a.first_id, &a.last_id, &a.timestamp, maker, best_match);
+    int res = fscanf(at, "%ld,%lf,%lf,%ld,%ld,%ld,%s,%s", &a.id, &a.price,
+                     &a.quantity, &a.first_id, &a.last_id, &a.timestamp, maker,
+                     best_match);
+    if (res == EOF)
+      break;
+    agg_trade_cnt++;
     a.maker = maker[0] == 'T', a.best_match = best_match[0] == 'T';
     a.trades = readTradesBetweenTime(a.first_id, a.last_id);
     if (a.timestamp >= open_time && a.timestamp <= close_time)
@@ -65,28 +74,35 @@ std::vector<AggTrade> readAggTradesBetweenTime(int64_t open_time,
 }
 
 void readKLine() {
-  int cnt = 0;
   auto start = clock();
-  while (!feof(k) && !stop_reading) {
+  while (!stop_reading) {
     KLine kl = KLine();
     int tmp;
-    fscanf(k, "%ld,%lf,%lf,%lf,%lf,%lf,%ld,%lf,%hd,%lf,%lf,%d", &kl.open_time,
-           &kl.open, &kl.high, &kl.low, &kl.close, &kl.volume, &kl.close_time,
-           &kl.quote_vol, &kl.number_of_trade, &kl.taker_base_vol,
-           &kl.taker_quote_vol, &tmp);
+    int res =
+        fscanf(k, "%ld,%lf,%lf,%lf,%lf,%lf,%ld,%lf,%hd,%lf,%lf,%d",
+               &kl.open_time, &kl.open, &kl.high, &kl.low, &kl.close,
+               &kl.volume, &kl.close_time, &kl.quote_vol, &kl.number_of_trade,
+               &kl.taker_base_vol, &kl.taker_quote_vol, &tmp);
+    if (res == EOF)
+      break;
     kl.agg_trades = readAggTradesBetweenTime(kl.open_time, kl.close_time);
-    std::lock_guard<std::mutex> lock(mtx);
+    // std::lock_guard<std::mutex> lock(mtx);
     data_frames.push(kl);
-    cnt++;
+    kl_cnt++;
     // std::cout << cnt << '\n';
     // if (cnt == 100 * 60)
     //   break;
+    std::cout << "\033[F\033[K";
+    printf("Data frames per sec: %lf, Agg trade per sec: %lf, Trades per sec: "
+           "%lf\n",
+           (double)kl_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC),
+           (double)agg_trade_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC),
+           (double)trade_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC));
+    if ((double)kl_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC) < 50)
+      break;
   }
   done = true;
-  std::cout << stop_reading << '\n';
   printf("Reading thread stopped\n");
-  printf("Data frames per sec: %lf\n",
-         (double)cnt / ((double)(clock() - start) / CLOCKS_PER_SEC));
 }
 
 void initParser(FILE *kl, FILE *t, FILE *a) {
@@ -96,7 +112,7 @@ void initParser(FILE *kl, FILE *t, FILE *a) {
 }
 
 std::optional<KLine> getNextKLine() {
-  static int index = 0;
+  // static int index = 0;
   std::lock_guard<std::mutex> lock(mtx);
   if (data_frames.empty() || stop_reading)
     return std::optional<KLine>();

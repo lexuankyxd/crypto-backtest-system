@@ -1,5 +1,5 @@
-#include "alpha.hpp"
-#include "ta-function.hpp"
+#include "../../include/alpha.hpp"
+#include "../../include/ta-function.hpp"
 #include <bits/stdc++.h>
 #include <cstdio>
 using namespace std;

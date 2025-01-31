@@ -1,5 +1,5 @@
-#include "report.hpp"
-#include "datatypes.hpp"
+#include "../../include/report.hpp"
+#include "../../include/datatypes.hpp"
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
