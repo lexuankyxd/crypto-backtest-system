@@ -1,13 +1,12 @@
 {
-  "download_data": false,
-  "data": [
-    [
+  "mode_config": {
+    "mode": "backtest",
+    "market": "spot",
+    "download_data": false,
+    "data": [
+      { "type": "kline", "dir": "formalized-data/BTCUSDT-1s-2024-12-03.csv" },
       {
-        "type": "kline",
-        "dir": "formalized-data/BTCUSDT-1s-2024-12-03.csv"
-      },
-      {
-        "type": "aggTrade",
+        "type": "agg_trade",
         "dir": "formalized-data/BTCUSDT-aggTrades-2024-12-03.csv"
       },
       {
@@ -15,9 +14,13 @@
         "dir": "formalized-data/BTCUSDT-trades-2024-12-03.csv"
       }
     ]
-  ],
-  "gen_report": true,
-  "live_print": true,
-  "print_dist": 60,
-  "strat_name": "demo_algo"
+  },
+  "strategy": {
+    "name": "demo"
+  },
+  "run_config": {
+    "live_print": true,
+    "live_print_interval": 60,
+    "gen_report": true
+  }
 }

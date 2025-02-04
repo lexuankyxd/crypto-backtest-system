@@ -1,5 +1,6 @@
 #TODO
 
+- Implement trading view apis.
 - Add progress bar lol.
 - Optimize the data parsing process.
 - Optimize the trade sell execution.

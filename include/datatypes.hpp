@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+namespace datatype {
 typedef struct Trade {
   int64_t id, time;
   double price, quantity, quote_quantity;
@@ -62,8 +62,9 @@ typedef struct KLine {
     return oss.str();
   }
 } KLine;
+typedef struct DataContainer {
 
-typedef struct Signal {
+} typedef struct Signal {
   int64_t latest_exit_time, created_at;
   double high_out, low_out, amt,
       in_price; // high and low will be in base -> quote ratio,
@@ -78,5 +79,5 @@ typedef struct Signal {
     return oss.str();
   }
 } Signal;
-
+} // namespace datatype
 #endif
