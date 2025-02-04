@@ -1,8 +1,9 @@
+#ifndef TA_FUNCTION_H
+#define TA_FUNCTION_H
 #include <queue>
-#include <stdexcept>
-
+namespace tafunctions {
 typedef struct SMA {
-  int d;
+  long unsigned int d;
   std::queue<double> vals;
   double sum = 0;
   // SMA(int days) {if(days <= 0) throw std::invalid_argument("days must be
@@ -18,3 +19,5 @@ typedef struct SMA {
   };
   double getVal() { return sum / d; }
 } SMA;
+} // namespace tafunctions
+#endif

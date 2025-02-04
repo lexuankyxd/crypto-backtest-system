@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <ctime>
-#include <iostream>
+// #include <iostream>
 #include <mutex>
 #include <optional>
 #include <queue>
@@ -17,14 +17,20 @@ std::queue<KLine> data_frames;
 std::mutex mtx;
 std::atomic<bool> done = false;
 std::atomic<bool> stop_reading = false;
-int trade_cnt = 0, agg_trade_cnt = 0, kl_cnt = 0;
+namespace dataparser {
 // super slow, will optimize later
 std::vector<Trade> readTradesBetweenTime(int64_t first_id, int64_t last_id) {
-  static std::vector<Trade> trade_buffer;
+  static std::queue<Trade> trade_buffer;
   std::vector<Trade> ts;
-  for (Trade t : trade_buffer)
-    if (t.id >= first_id && t.id <= last_id)
+  while (!trade_buffer.empty()) {
+    Trade &t = trade_buffer.front();
+    if (t.id >= first_id && t.id <= last_id) {
       ts.push_back(t);
+      trade_buffer.pop();
+    } else {
+      break;
+    }
+  }
   while (true) {
     Trade t = Trade();
     char maker[10], best_match[10];
@@ -34,11 +40,10 @@ std::vector<Trade> readTradesBetweenTime(int64_t first_id, int64_t last_id) {
     if (res == EOF)
       break;
     t.maker = maker[0] == 'T', t.best_match = best_match[0] == 'T';
-    trade_cnt++;
     if (t.id >= first_id && t.id <= last_id)
       ts.push_back(t);
     else {
-      trade_buffer.push_back(t);
+      trade_buffer.push(t);
       break;
     }
   }
@@ -47,11 +52,17 @@ std::vector<Trade> readTradesBetweenTime(int64_t first_id, int64_t last_id) {
 
 std::vector<AggTrade> readAggTradesBetweenTime(int64_t open_time,
                                                int64_t close_time) {
-  static std::vector<AggTrade> agg_trades_buffer;
+  static std::queue<AggTrade> agg_trades_buffer;
   std::vector<AggTrade> agg_trades;
-  for (AggTrade a : agg_trades_buffer)
-    if (a.timestamp >= open_time && a.timestamp <= close_time)
+  while (!agg_trades_buffer.empty()) {
+    AggTrade &a = agg_trades_buffer.front();
+    if (a.timestamp >= open_time && a.timestamp <= close_time) {
       agg_trades.push_back(a);
+      agg_trades_buffer.pop();
+    } else {
+      break;
+    }
+  }
   while (true) {
     AggTrade a = AggTrade();
     char maker[10], best_match[10];
@@ -60,13 +71,12 @@ std::vector<AggTrade> readAggTradesBetweenTime(int64_t open_time,
                      best_match);
     if (res == EOF)
       break;
-    agg_trade_cnt++;
     a.maker = maker[0] == 'T', a.best_match = best_match[0] == 'T';
     a.trades = readTradesBetweenTime(a.first_id, a.last_id);
     if (a.timestamp >= open_time && a.timestamp <= close_time)
       agg_trades.push_back(a);
     else {
-      agg_trades_buffer.push_back(a);
+      agg_trades_buffer.push(a);
       break;
     }
   }
@@ -74,7 +84,6 @@ std::vector<AggTrade> readAggTradesBetweenTime(int64_t open_time,
 }
 
 void readKLine() {
-  auto start = clock();
   while (!stop_reading) {
     KLine kl = KLine();
     int tmp;
@@ -88,18 +97,19 @@ void readKLine() {
     kl.agg_trades = readAggTradesBetweenTime(kl.open_time, kl.close_time);
     // std::lock_guard<std::mutex> lock(mtx);
     data_frames.push(kl);
-    kl_cnt++;
     // std::cout << cnt << '\n';
     // if (cnt == 100 * 60)
     //   break;
-    std::cout << "\033[F\033[K";
-    printf("Data frames per sec: %lf, Agg trade per sec: %lf, Trades per sec: "
-           "%lf\n",
-           (double)kl_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC),
-           (double)agg_trade_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC),
-           (double)trade_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC));
-    if ((double)kl_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC) < 50)
-      break;
+    // std::cout << "\033[F\033[K";
+    // printf("Data frames per sec: %lf, Agg trade per sec: %lf, Trades per sec:
+    // "
+    //        "%lf\n",
+    //        (double)kl_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC),
+    //        (double)agg_trade_cnt / ((double)(clock() - start) /
+    //        CLOCKS_PER_SEC), (double)trade_cnt / ((double)(clock() - start) /
+    //        CLOCKS_PER_SEC));
+    // if ((double)kl_cnt / ((double)(clock() - start) / CLOCKS_PER_SEC) < 50)
+    //   break;
   }
   done = true;
   printf("Reading thread stopped\n");
@@ -121,24 +131,9 @@ std::optional<KLine> getNextKLine() {
   return tmp;
 }
 
-std::optional<std::vector<KLine>> getKLineInRange(int64_t open_time,
-                                                  int64_t close_time) {
-  // std::lock_guard<std::mutex> lock(mtx);
-  // auto start = std::lower_bound(
-  //     data_frames.begin(), data_frames.end(), open_time,
-  //     [open_time](KLine t) { return t.open_time < open_time; });
-  // auto end = std::upper_bound(
-  //                data_frames.begin(), data_frames.end(), close_time,
-  //                [close_time](KLine t) { return t.close_time < close_time; })
-  //                -
-  //            1;
-  // if (start != data_frames.end())
-  //   return std::vector<KLine>(start, end);
-  return std::optional<std::vector<KLine>>();
-}
-
 bool isDone() { return done; }
 void stop_force() {
   stop_reading = true;
   printf("stop called\n");
 }
+} // namespace dataparser

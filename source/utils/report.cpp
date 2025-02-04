@@ -8,7 +8,7 @@
 
 std::ofstream tradesPlaced;
 std::ofstream balanceTrack;
-
+namespace reportgen {
 void openFileStream(std::string alg_name, std::string data_name) {
   tradesPlaced =
       std::ofstream("report/trades-" + alg_name + "-" + data_name + ".csv");
@@ -33,3 +33,4 @@ void closeFileStream() {
   balanceTrack.close();
   printf("Report generated\n");
 }
+} // namespace reportgen

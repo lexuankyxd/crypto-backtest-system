@@ -31,5 +31,6 @@ public:
     return oss.str(); // Return the complete string
   }
 } BacktestDataConfiguration;
-
+namespace configparser {
 BacktestDataConfiguration parseConfig();
+}

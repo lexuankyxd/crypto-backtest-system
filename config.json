@@ -1,4 +1,5 @@
 {
+  "download_data": false,
   "data": [
     [
       {
@@ -16,7 +17,7 @@
     ]
   ],
   "gen_report": true,
-  "live_print": false,
+  "live_print": true,
   "print_dist": 60,
   "strat_name": "demo_algo"
 }

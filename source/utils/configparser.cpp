@@ -1,10 +1,10 @@
 #include "../../include/configparser.hpp"
 #include <fstream>
-#include <iostream>
 #include <nlohmann/json.hpp>
 #include <utility>
 // always search for config.json file at project root.
 using json = nlohmann::json;
+namespace configparser {
 BacktestDataConfiguration parseConfig() {
   std::ifstream f("config.json");
 
@@ -23,3 +23,4 @@ BacktestDataConfiguration parseConfig() {
   }
   return config;
 }
+} // namespace configparser
